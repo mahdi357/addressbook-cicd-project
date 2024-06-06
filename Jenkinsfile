@@ -1,60 +1,34 @@
-
 pipeline{
-    tools{
-        jdk 'myjava'
-        maven 'mymaven'
-    }
-	agent any
-      stages{
-           stage('Checkout'){
-	    
-               steps{
-		 echo 'cloning..'
-                 git 'https://github.com/Sonal0409/DevOpsClassCodes.git'
-              }
-          }
-          stage('Compile'){
-             
-              steps{
-                  echo 'compiling..'
-                  sh 'mvn compile'
-	      }
-          }
-          stage('CodeReview'){
-		  
-              steps{
-		    
-		  echo 'codeReview'
-                  sh 'mvn pmd:pmd'
-              }
-          }
-           stage('UnitTest'){
-		  
-              steps{
-	         echo 'Testing'
-                  sh 'mvn test'
-              }
-               post {
-               success {
-                   junit 'target/surefire-reports/*.xml'
-               }
-           }	
-          }
-           stage('MetricCheck'){
-              
-              steps{
-                  sh 'mvn cobertura:cobertura -Dcobertura.report.format=xml'
-              }
-              
-          }
-          stage('Package'){
-		  
-              steps{
-		  
-                  sh 'mvn package'
-              }
-          }
-	     
-          
+ agent any
+ stages{
+   stage("checkout git"){
+      steps{
+        echo "git checkout started"
+        git url: "https://github.com/akshu20791/addressbook-cicd-project"
       }
+   }
+  stage("compiling the code"){
+    steps{
+      echo "we are compiling the code"
+      sh "mvn compile"
+     }
+   }
+   stage("qa for the code"){
+        steps{
+            sh "mvn checkstyle:checkstyle" 
+            recordIssues sourceCodeRetention: 'LAST_BUILD', tools: [checkStyle()]
+      }
+   }
+   stage("Converting the code to package"){
+        steps{
+            sh "mvn package" 
+      }
+   }
+   stage("Deploy the project in tomcat"){
+        steps{
+            sh "sudo cp /var/lib/jenkins/workspace/addressbook-pipeline/target/addressbook.war /opt/apache-tomcat-8.5.100/webapps"
+      }
+   }
+   
+ }
 }
